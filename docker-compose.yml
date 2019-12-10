@@ -1,0 +1,47 @@
+version: "3.4"
+
+services:
+  produser.app:
+    image: produserapp
+    build:
+      context: .
+      dockerfile: Produser.App/Dockerfile
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+    networks:
+      - elk
+  redis:
+    image: "redis:3.2.11"
+    restart: always
+    hostname: redis
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - elk
+    command: redis-server --requirepass adminadmin
+  rabbitmq:
+    image: rabbitmq:3-management
+    restart: always
+    command: rabbitmq-server
+    container_name: rabbitmq
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: "springcloud"
+      RABBITMQ_DEFAULT_PASS: "123456"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "5672"]
+      interval: 5s
+      timeout: 15s
+      retries: 3
+
+    networks:
+      - elk
+
+networks:
+  elk:
+    driver: bridge
